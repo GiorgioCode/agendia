@@ -1,0 +1,209 @@
+@startuml
+title SaaS Multitenant de Turnos - ERD
+
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam shadowing false
+
+entity "plans" as plans {
+  * id : uuid <<PK>>
+  --
+  * code : text <<UQ>>
+  * name : text
+  description : text
+  price : numeric
+  * currency : text
+  max_professionals : integer
+  max_admins : integer
+  * active : boolean
+  * created_at : timestamptz
+}
+
+entity "tenants" as tenants {
+  * id : uuid <<PK>>
+  --
+  * name : text
+  * slug : text <<UQ>>
+  responsible_name : text
+  description : text
+  phone : text
+  email : text
+  address : text
+  website : text
+  * timezone : text
+  logo_path : text
+  primary_color : text
+  secondary_color : text
+  welcome_text : text
+  * active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity "tenant_domains" as tenant_domains {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * hostname : text <<UQ>>
+  * verified : boolean
+  * created_at : timestamptz
+}
+
+entity "subscriptions" as subscriptions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * plan_id : uuid <<FK>>
+  * status : text
+  * starts_at : timestamptz
+  trial_ends_at : timestamptz
+  current_period_end : timestamptz
+  provider : text
+  provider_subscription_id : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity "tenant_members" as tenant_members {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * user_id : uuid <<FK auth.users>>
+  * role : text
+  * active : boolean
+  * created_at : timestamptz
+  --
+  UQ (tenant_id, user_id)
+}
+
+entity "platform_admins" as platform_admins {
+  * user_id : uuid <<PK, FK auth.users>>
+  --
+  * created_at : timestamptz
+}
+
+entity "professionals" as professionals {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  user_id : uuid <<FK auth.users>>
+  * first_name : text
+  * last_name : text
+  * specialty : text
+  registration_number : text
+  phone : text
+  email : text
+  description : text
+  * active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  --
+  UQ (tenant_id, id)
+}
+
+entity "patients" as patients {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  user_id : uuid <<FK auth.users>>
+  * first_name : text
+  * last_name : text
+  dni : text
+  phone : text
+  email : text
+  notes : text
+  * active : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  --
+  UQ (tenant_id, id)
+  UQ (tenant_id, user_id)
+  UQ (tenant_id, dni) [dni not null]
+}
+
+entity "professional_schedules" as professional_schedules {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * professional_id : uuid <<FK>>
+  * day_of_week : integer
+  * start_time : time
+  * end_time : time
+  * appointment_duration : integer
+  * active : boolean
+  * created_at : timestamptz
+}
+
+entity "schedule_exceptions" as schedule_exceptions {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * professional_id : uuid <<FK>>
+  * exception_date : date
+  * type : text
+  start_time : time
+  end_time : time
+  appointment_duration : integer
+  reason : text
+  * created_at : timestamptz
+}
+
+entity "appointments" as appointments {
+  * id : uuid <<PK>>
+  --
+  * tenant_id : uuid <<FK>>
+  * professional_id : uuid <<FK>>
+  * patient_id : uuid <<FK>>
+  * appointment_date : date
+  * start_time : time
+  * end_time : time
+  * status : text
+  reason : text
+  notes : text
+  * source : text
+  created_by : uuid <<FK auth.users>>
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+plans ||--o{ subscriptions : plan_id
+tenants ||--o{ subscriptions : tenant_id
+tenants ||--o{ tenant_domains : tenant_id
+tenants ||--o{ tenant_members : tenant_id
+tenants ||--o{ professionals : tenant_id
+tenants ||--o{ patients : tenant_id
+tenants ||--o{ professional_schedules : tenant_id
+tenants ||--o{ schedule_exceptions : tenant_id
+tenants ||--o{ appointments : tenant_id
+
+professionals ||--o{ professional_schedules : professional_id
+professionals ||--o{ schedule_exceptions : professional_id
+professionals ||--o{ appointments : professional_id
+patients ||--o{ appointments : patient_id
+
+note right of tenants
+  Multitenancy:
+  Shared DB + Shared Schema
+  Aislamiento por tenant_id + RLS
+end note
+
+note bottom of appointments
+  Reserva crítica mediante RPC.
+  Los estados CANCELLED no bloquean slots.
+  Lock transaccional por tenant + exclusión GiST
+  impiden solapamientos y dobles reservas.
+  RPC propias no devuelven notas internas.
+end note
+
+note bottom of professional_schedules
+  Exclusión GiST de rangos semanales activos.
+  Duración entre 1 y 1440 minutos.
+end note
+
+note bottom of subscriptions
+  TRIALING: 14 días desde el alta.
+  Límites de plan verificados en PostgreSQL.
+end note
+
+@enduml
