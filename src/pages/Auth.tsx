@@ -32,9 +32,9 @@ export function AuthPage({
     forgot: "Recuperá tu acceso.",
     reset: "Elegí una nueva contraseña.",
   }[mode];
-  const base = (
-    import.meta.env.VITE_APP_BASE_URL || window.location.origin
-  ).replace(/\/$/, "");
+  // Keep email returns on the origin where authentication started.
+  // A stale build-time URL must never send deployed users to localhost.
+  const base = window.location.origin;
   return (
     <div className="auth-wrap">
       <aside className="auth-aside">

@@ -16,6 +16,7 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run test:db
+      - run: npm run test:demo-seed
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4

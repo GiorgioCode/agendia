@@ -16,7 +16,8 @@
     "db:types": "supabase gen types typescript --local > src/types/database.generated.ts",
     "test:e2e:live": "playwright test --config playwright.live.config.ts",
     "format": "prettier --write src tests scripts *.ts *.json *.js *.md",
-    "check": "npm run lint && npm run build && npm test && npm run test:db"
+    "check": "npm run lint && npm run build && npm test && npm run test:db",
+    "test:demo-seed": "node --test --test-concurrency=1 tests/demo-seed.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

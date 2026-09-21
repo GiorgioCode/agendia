@@ -155,6 +155,8 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
+# Solo Supabase local. Para el proyecto remoto, configurar URL Configuration
+# con https://agendiaturnos.vercel.app (ver README).
 site_url = "http://localhost:5173"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""

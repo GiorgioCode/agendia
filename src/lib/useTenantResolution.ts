@@ -15,6 +15,7 @@ export function useTenantResolution(path: string) {
   }
   const custom = ![
     appHost,
+    "agendiaturnos.vercel.app",
     root,
     `app.${root}`,
     `www.${root}`,

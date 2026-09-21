@@ -167,14 +167,26 @@ test("registration and password recovery show email confirmation without losing 
   await page.goto("/register?next=%2Fsignup");
   await page.getByLabel("Email").fill("new@example.test");
   await page.getByLabel("Contraseña").fill("password123");
+  const signup = page.waitForRequest((r) =>
+    r.url().includes("/auth/v1/signup"),
+  );
   await page.getByRole("button", { name: "Crear cuenta", exact: true }).click();
+  expect(new URL((await signup).url()).searchParams.get("redirect_to")).toBe(
+    new URL("/auth/callback?next=%2Fsignup", page.url()).href,
+  );
   await expect(page.getByRole("status")).toContainText("Revisá tu correo");
   await expect(
     page.getByRole("link", { name: "Volver a iniciar sesión" }),
   ).toHaveAttribute("href", "/login?next=%2Fsignup");
   await page.goto("/forgot-password");
   await page.getByLabel("Email").fill("new@example.test");
+  const recovery = page.waitForRequest((r) =>
+    r.url().includes("/auth/v1/recover"),
+  );
   await page.getByRole("button", { name: "Enviar instrucciones" }).click();
+  expect(new URL((await recovery).url()).searchParams.get("redirect_to")).toBe(
+    new URL("/reset-password", page.url()).href,
+  );
   await expect(page.getByRole("status")).toContainText("Revisá tu correo");
 });
 

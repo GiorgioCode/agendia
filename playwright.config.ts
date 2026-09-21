@@ -13,7 +13,8 @@ export default defineConfig({
     env: {
       VITE_SUPABASE_URL: "http://127.0.0.1:54321",
       VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_ui_test_only",
-      VITE_APP_BASE_URL: "http://127.0.0.1:5174",
+      // Deliberately stale: email redirects must use the browser origin.
+      VITE_APP_BASE_URL: "http://localhost:5173",
       VITE_ROOT_DOMAIN: "",
     },
   },

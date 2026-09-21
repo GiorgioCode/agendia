@@ -13,7 +13,7 @@ npm install
 Conservá tu `.env` existente. Para una instalación nueva, copiá `.env.example` a `.env` y completá:
 
 ```dotenv
-VITE_APP_BASE_URL=http://localhost:5173
+VITE_APP_BASE_URL=https://agendiaturnos.vercel.app
 VITE_ROOT_DOMAIN=
 VITE_SUPABASE_URL=https://TU_PROYECTO.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=TU_CLAVE_PUBLICABLE
@@ -25,13 +25,16 @@ Se admite `VITE_SUPABASE_ANON_KEY` como alternativa heredada. Si ambas están co
 
 En **Supabase → SQL Editor**, ejecutá el contenido completo de cada archivo y esperá a que termine correctamente antes del siguiente:
 
-| Orden | Archivo                                                                                          | Contenido                                                                                                                          |
-| ----- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | [`20260914000100_initial.sql`](supabase/migrations/20260914000100_initial.sql)                   | Modelo original, tablas, índices, funciones iniciales, RLS, Storage y planes BASIC/PRO.                                            |
-| 2     | [`20260914000200_security_and_api.sql`](supabase/migrations/20260914000200_security_and_api.sql) | RLS definitivo, roles, reservas con exclusión de rangos, altas, límites, consultas públicas y de pacientes, miembros y plataforma. |
-| 3     | [`20260914000300_final_validation.sql`](supabase/migrations/20260914000300_final_validation.sql) | Validaciones adicionales, cancelación con orden consistente de bloqueos y edición de notas mediante RPC.                           |
+| Orden | Archivo                                                                                                      | Contenido                                                                                                                          |
+| ----- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | [`20260914000100_initial.sql`](supabase/migrations/20260914000100_initial.sql)                               | Modelo original, tablas, índices, funciones iniciales, RLS, Storage y planes BASIC/PRO.                                            |
+| 2     | [`20260914000200_security_and_api.sql`](supabase/migrations/20260914000200_security_and_api.sql)             | RLS definitivo, roles, reservas con exclusión de rangos, altas, límites, consultas públicas y de pacientes, miembros y plataforma. |
+| 3     | [`20260914000300_final_validation.sql`](supabase/migrations/20260914000300_final_validation.sql)             | Validaciones adicionales, cancelación con orden consistente de bloqueos y edición de notas mediante RPC.                           |
+| 4     | [`20260914000400_fix_guard_tenant_write.sql`](supabase/migrations/20260914000400_fix_guard_tenant_write.sql) | Corrige el trigger compartido de instalaciones anteriores: resuelve `id`/`tenant_id` sin acceder a columnas inexistentes.          |
 
-**Aplicá las tres antes de usar la app.** Cada archivo contiene su propia transacción. Están destinados a un proyecto nuevo y deben ejecutarse una sola vez. Si una ejecución falla antes de `COMMIT`, revisá el error y volvé a ejecutar ese archivo completo. No ejecutes archivos posteriores sobre una migración incompleta.
+**Aplicá las cuatro antes de usar la app.** Cada archivo contiene su propia transacción. Están destinados a un proyecto nuevo y deben ejecutarse una sola vez. Si una ejecución falla antes de `COMMIT`, revisá el error y volvé a ejecutar ese archivo completo. No ejecutes archivos posteriores sobre una migración incompleta.
+
+Si aparece `record "new" has no field "tenant_id"` al poblar la base, ejecutá **solo la migración 004** sobre tu instalación existente y luego repetí el seed completo. No hace falta volver a aplicar 001–003. La corrección reemplaza la función del trigger sin borrar datos y puede ejecutarse más de una vez.
 
 `db.sql` se conserva como referencia original entregada con la especificación: **no lo ejecutes además de las migraciones ni lo vuelvas a aplicar después**, porque restauraría políticas anteriores. `db.puml` refleja los ajustes del modelo final. El PNG original no se ha regenerado.
 
@@ -41,9 +44,13 @@ La aplicación no ejecuta migraciones automáticamente. No se ha aplicado ningun
 
 En **Authentication → URL Configuration**:
 
-- Site URL: `http://localhost:5173` durante el desarrollo.
-- Redirect URLs: `http://localhost:5173/auth/callback`, `http://localhost:5173/reset-password` y sus equivalentes en el dominio de producción. Permití los parámetros de retorno del callback con el patrón adecuado, por ejemplo `http://localhost:5173/**` exclusivamente en desarrollo.
-- Si usás `127.0.0.1` en lugar de `localhost`, agregá también sus URLs. Usá el mismo origen de forma consistente al iniciar sesión.
+- Site URL: `https://agendiaturnos.vercel.app`.
+- Redirect URLs:
+  - `https://agendiaturnos.vercel.app/auth/callback`
+  - `https://agendiaturnos.vercel.app/auth/callback?next=**` (conserva la ruta de reserva).
+  - `https://agendiaturnos.vercel.app/reset-password`
+- Para desarrollar contra este mismo proyecto, agregá también `http://localhost:5173/**` y `http://127.0.0.1:5173/**`; mantené Site URL en producción.
+- Estos ajustes se realizan en el dashboard del proyecto remoto. `supabase/config.toml` configura exclusivamente Supabase local.
 
 En **Authentication → Providers → Email**, habilitá email y contraseña. Con confirmación de email habilitada, el usuario debe abrir el enlace antes de crear el consultorio o reservar. Configurá SMTP para entregar correos de confirmación y recuperación en producción. La app no envía emails por un servicio propio.
 
@@ -63,7 +70,7 @@ Abrí **http://localhost:5173**. Para el primer consultorio:
 
 ### Datos de demostración opcionales
 
-Después de las tres migraciones podés ejecutar [`supabase/seed.sql`](supabase/seed.sql). Crea `Clínica Demo`, tres profesionales y los horarios solicitados. La prueba vence a los 14 días. El seed es repetible y no renueva una prueba ya creada.
+Después de las cuatro migraciones podés ejecutar [`supabase/seed.sql`](supabase/seed.sql). Crea `Clínica Demo`, tres profesionales y los horarios solicitados. La prueba vence a los 14 días. El seed es repetible y no renueva una prueba ya creada.
 
 El seed **no crea usuarios ni contraseñas**. Si necesitás administrar Clínica Demo, registrá una cuenta en la aplicación y vinculala desde SQL Editor reemplazando el email:
 
@@ -78,6 +85,10 @@ set role = excluded.role, active = true;
 ```
 
 Ese SQL es para el alta inicial realizada por el propietario del proyecto; la gestión cotidiana del equipo se hace desde **Equipo**, con límites y protección del último administrador.
+
+### Dos clínicas con credenciales listas para probar
+
+Para crear **Clínica del Sur** y **Centro Médico Belgrano**, cada una con cuatro profesionales, horarios y una cuenta administradora, ejecutá [`supabase/seed_demo_clinics.sql`](supabase/seed_demo_clinics.sql) después de las cuatro migraciones. Las credenciales iniciales y URLs están en [Accesos de demostración](docs/demo-access.md). Es opcional y se ejecuta manualmente; no forma parte del seed automático.
 
 ## Funcionalidades y rutas
 
@@ -161,7 +172,7 @@ npm run test:e2e
 ```
 
 - **Unitarias:** fechas, calendarios, resolución de tenant, retornos seguros y mensajes de error.
-- **Base de datos:** PostgreSQL real efímero mediante `embedded-postgres`. Aplica las tres migraciones desde cero, ejercita roles SQL/RLS, slots, excepciones, colisiones concurrentes, límites, aislamiento, Storage y altas. No lee `.env`, no usa `DATABASE_URL` y elimina exclusivamente su propio directorio temporal. `tests/embedded-bootstrap.sql` reproduce las interfaces mínimas de Auth y Storage; no reemplaza una prueba integral del servicio Supabase.
+- **Base de datos:** PostgreSQL real efímero mediante `embedded-postgres`. Aplica las cuatro migraciones desde cero, ejercita roles SQL/RLS, slots, excepciones, colisiones concurrentes, límites, aislamiento, Storage y altas. No lee `.env`, no usa `DATABASE_URL` y elimina exclusivamente su propio directorio temporal. `tests/embedded-bootstrap.sql` reproduce las interfaces mínimas de Auth y Storage; no reemplaza una prueba integral del servicio Supabase.
 - **Navegador:** Playwright ejecuta los recorridos de usuario con respuestas HTTP controladas de Supabase en un origen local fijo. No envía solicitudes a tu proyecto remoto. Comprueba navegación, formularios, permisos de interfaz, login con retorno, reservas, errores y cancelaciones. Guarda capturas de escritorio y móvil en `test-results/`.
 
 ### Integración completa con Supabase local
@@ -197,7 +208,22 @@ npm run preview
 
 Publicá `dist/` en un hosting estático. Configurá las variables públicas antes del build y reconstruí al modificarlas. `vercel.json` incluye fallback SPA; `public/_redirects` hace lo mismo en Netlify/Cloudflare Pages. En otros hostings configurá las rutas no estáticas para servir `index.html`.
 
-En producción, ajustá `VITE_APP_BASE_URL`, Site URL y Redirect URLs de Supabase Auth al dominio HTTPS real. La forma `/t/:tenantSlug` siempre está disponible.
+Deploy actual: **https://agendiaturnos.vercel.app/**. En Vercel → Settings → Environment Variables (Production), configurá:
+
+```dotenv
+VITE_APP_BASE_URL=https://agendiaturnos.vercel.app
+VITE_ROOT_DOMAIN=
+VITE_SUPABASE_URL=https://egzgkwwnxpvhztycpvbs.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<clave pública del proyecto>
+```
+
+Después publicá estos cambios y hacé un nuevo deploy: las variables de Vite se incorporan al compilar; modificar el `.env` local no actualiza Vercel. No agregues `DATABASE_URL` ni claves administrativas al frontend.
+
+Configurá también Supabase Auth como indica la sección anterior. Si personalizaste las plantillas de correo, eliminá enlaces fijos a localhost y conservá el enlace de verificación `{{ .ConfirmationURL }}`. Solicitá un correo nuevo después del cambio: los ya enviados conservan su URL.
+
+La confirmación y recuperación vuelven al origen del navegador, incluso si una variable antigua apunta a localhost. Esto conserva la sesión y la intención de reserva en el mismo dominio. Para previews o dominios propios, autorizá sus callbacks y recuperación en Supabase antes de usarlos. La forma `/t/:tenantSlug` siempre está disponible; dejá `VITE_ROOT_DOMAIN` vacío para este deploy (no uses `vercel.app` como dominio raíz).
+
+Referencias: [URLs de retorno de Supabase](https://supabase.com/docs/guides/auth/redirect-urls) y [variables de entorno de Vite](https://vite.dev/guide/env-and-mode).
 
 Para subdominios:
 
