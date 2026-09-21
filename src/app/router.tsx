@@ -15,6 +15,7 @@ import { useAuth } from "./providers";
 import { configured, rpc, supabase } from "../lib/supabase";
 import { Brand, Empty, ErrorState, Loading } from "../components/ui";
 import { Home, Pricing } from "../pages/Marketing";
+import { Directory } from "../pages/Directory";
 import { AuthPage, AuthCallback } from "../pages/Auth";
 import {
   Availability,
@@ -105,17 +106,19 @@ function Shell() {
         >
           {!session ? (
             <>
+              <NavLink to="/directorio">Buscar turno</NavLink>
               <NavLink to="/pricing">Planes</NavLink>
               <NavLink to="/login">Iniciar sesión</NavLink>
               <Link className="btn small" to="/signup">
-                Crear consultorio
+                Soy prestador
                 <ArrowUpRight size={15} />
               </Link>
             </>
           ) : (
             <>
               <NavLink to="/account">Mis turnos</NavLink>
-              <NavLink to="/admin">Mi consultorio</NavLink>
+              <NavLink to="/admin">Mi espacio</NavLink>
+              <NavLink to="/directorio">Buscar turno</NavLink>
               {platform.data && <NavLink to="/platform">Plataforma</NavLink>}
               <button
                 className="btn small secondary"
@@ -176,6 +179,7 @@ export function AppRouter() {
         <Routes>
           <Route element={<Shell />}>
             <Route index element={<HostHome />} />
+            <Route path="directorio" element={<Directory />} />
             <Route path="pricing" element={<Pricing />} />
             <Route path="login" element={<AuthPage mode="login" />} />
             <Route path="register" element={<AuthPage mode="register" />} />

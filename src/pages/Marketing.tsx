@@ -182,67 +182,67 @@ export function Home() {
             bien <em>cuidado.</em>
           </h1>
           <p className="hero-description">
-            La agenda de tu consultorio, simple y en un solo lugar. Organizá a
-            tu equipo y dejá que tus pacientes reserven cuando lo necesiten.
+            Pacientes que encuentran turnos más fácil. Clínicas y profesionales
+            que organizan su agenda en un solo lugar.
           </p>
           <div className="button-row">
-            <Link className="btn large" to="/signup">
-              Crear mi consultorio
+            <Link className="btn large" to="/directorio">
+              Buscar turno
               <ArrowUpRight size={18} />
             </Link>
-            <a className="btn secondary large" href="#como-funciona">
-              Conocer Agendia
+            <Link className="btn secondary large" to="/signup">
+              Soy prestador
               <ArrowRight size={18} />
-            </a>
+            </Link>
           </div>
           <div className="hero-footnote">
             <Check size={15} />
-            14 días de prueba<span>·</span>
+            Directorio por especialidad<span>·</span>
             <Check size={15} />
-            Sin tarjeta de crédito
+            Reservas online
           </div>
         </div>
         <AgendaPreview />
       </section>
       <section className="trust-strip">
-        <span>PENSADA PARA QUIENES CUIDAN</span>
+        <span>DOS CAMINOS, UNA AGENDA</span>
+        <strong>Pacientes</strong>
+        <span className="separator" />
         <strong>Consultorios</strong>
         <span className="separator" />
         <strong>Profesionales independientes</strong>
-        <span className="separator" />
-        <strong>Centros de salud</strong>
         <Leaf size={22} />
       </section>
       <section className="features-section" id="como-funciona">
         <div className="section-title left">
           <p className="eyebrow">TODO EN SU LUGAR</p>
           <h2>
-            Menos idas y vueltas.
+            Buscar, reservar y atender.
             <br />
-            Más espacio para atender.
+            Cada persona en su flujo.
           </h2>
         </div>
         <div className="feature-grid">
           {[
             {
               icon: CalendarDays,
-              title: "Una agenda que acompaña",
-              text: "Horarios, excepciones y turnos de todo tu equipo. Una vista clara para organizar cada día.",
+              title: "Pacientes encuentran turnos",
+              text: "Un directorio por especialidad permite llegar a clínicas y profesionales con reserva online.",
             },
             {
               icon: Clock3,
               title: "Reservas a cualquier hora",
-              text: "Tus pacientes eligen profesional y horario desde la página de tu consultorio, sin llamadas.",
+              text: "Cada prestador conserva su página pública y sus horarios disponibles para confirmar turnos.",
             },
             {
               icon: Users,
-              title: "Tu equipo, conectado",
-              text: "Cada persona con el acceso que necesita. Pacientes y turnos organizados en un mismo espacio.",
+              title: "Prestadores con identidad propia",
+              text: "Clínicas y profesionales independientes administran equipo, pacientes y agenda desde su panel.",
             },
             {
               icon: ShieldCheck,
-              title: "Cada consultorio, su espacio",
-              text: "Información protegida y una página con tu logo, tus colores y tu identidad.",
+              title: "Páginas diferenciadas",
+              text: "Plantillas, colores, imágenes y textos hacen que cada perfil público se sienta propio.",
             },
           ].map((x) => (
             <article className="feature" key={x.title}>
@@ -260,10 +260,14 @@ export function Home() {
         <span className="feature-icon">
           <CalendarDays />
         </span>
-        <h2>Hacé lugar para un día más simple.</h2>
-        <p>Tu próximo paso empieza con una agenda ordenada.</p>
+        <h2>Elegí cómo querés empezar.</h2>
+        <p>Buscá atención o abrí el espacio de tu práctica.</p>
+        <Link to="/directorio" className="btn light">
+          Buscar turno
+          <ArrowUpRight size={18} />
+        </Link>
         <Link to="/signup" className="btn light">
-          Crear mi consultorio
+          Registrar prestador
           <ArrowUpRight size={18} />
         </Link>
       </section>

@@ -908,9 +908,128 @@ textarea:focus {
   font-size: 0.75rem;
   color: #558264;
 }
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 22px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f8faf7;
+}
+.segmented-control button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 11px 12px;
+  color: #617365;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+.segmented-control button.selected {
+  background: white;
+  color: #23664b;
+  box-shadow: 0 8px 18px #23432612;
+}
 .narrow {
   max-width: 780px;
   margin: auto;
+}
+.directory-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(310px, 440px);
+  gap: 32px;
+  align-items: end;
+  margin-bottom: 32px;
+  padding: 34px 0 18px;
+}
+.directory-hero h1 {
+  max-width: 760px;
+  font-size: 3rem;
+}
+.directory-search {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  box-shadow: var(--shadow);
+}
+.directory-search label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.directory-search input,
+.directory-search select {
+  width: 100%;
+  border: 1px solid #d9e2da;
+  border-radius: 7px;
+  padding: 11px 12px;
+  background: #fbfcfb;
+}
+.directory-search label input {
+  border: 0;
+  padding: 7px 0;
+  background: transparent;
+}
+.directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+  gap: 22px;
+}
+.directory-card {
+  overflow: hidden;
+  padding: 0;
+}
+.directory-cover {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+.directory-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+}
+.directory-title {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.directory-title img {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+.directory-title h2 {
+  margin: 7px 0 0;
+  font-size: 1.25rem;
+}
+.directory-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #5f7869;
+}
+.specialty-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.specialty-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  background: var(--tenant-secondary);
+  color: var(--tenant-primary);
+  padding: 7px 10px;
+  font-size: 0.68rem;
+  font-weight: 650;
 }
 .tenant-brand {
   display: flex;
@@ -931,12 +1050,58 @@ textarea:focus {
   object-fit: contain;
 }
 .tenant-intro {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
   padding: 25px 0 38px;
   margin-bottom: 24px;
+}
+.tenant-hero-image {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.tenant-intro-copy {
+  max-width: 760px;
 }
 .tenant-intro h1 {
   max-width: 720px;
   font-size: 3rem;
+}
+.tenant-tagline {
+  margin: 12px 0;
+  color: var(--tenant-primary);
+  font-size: 1.08rem;
+  font-weight: 650;
+}
+.template-editorial .tenant-intro {
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1fr);
+  align-items: center;
+  padding: 28px 0 48px;
+}
+.template-editorial .tenant-hero-image {
+  order: 2;
+  min-height: 360px;
+}
+.template-editorial .tenant-intro-copy {
+  order: 1;
+}
+.template-editorial .tenant-intro h1 {
+  font-size: 3.35rem;
+}
+.template-compact .tenant-intro {
+  padding: 10px 0 22px;
+}
+.template-compact .tenant-hero-image {
+  display: none;
+}
+.template-compact .tenant-intro h1 {
+  font-size: 2.25rem;
+}
+.template-compact .professional-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 .contact-row {
   display: flex;
@@ -1574,6 +1739,18 @@ td small {
   .booking-grid {
     grid-template-columns: 1fr;
   }
+  .directory-hero,
+  .template-editorial .tenant-intro {
+    grid-template-columns: 1fr;
+  }
+  .directory-hero h1,
+  .template-editorial .tenant-intro h1 {
+    font-size: 2.2rem;
+  }
+  .template-editorial .tenant-hero-image {
+    order: 0;
+    min-height: 0;
+  }
   .tenant-intro h1 {
     font-size: 2.2rem;
   }
@@ -1757,6 +1934,12 @@ td small {
   }
   .slot-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+  .segmented-control {
+    grid-template-columns: 1fr;
+  }
+  .directory-grid {
+    grid-template-columns: 1fr;
   }
   .tenant-brand {
     align-items: flex-start;

@@ -16,12 +16,36 @@ test("landing, prices, and mobile navigation", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 390);
   await page.getByRole("button", { name: "Abrir menú" }).click();
-  await page.getByRole("link", { name: "Planes", exact: true }).click();
-  await expect(page).toHaveURL(/pricing/);
+  await page
+    .getByRole("navigation", { name: "Navegación principal" })
+    .getByRole("link", { name: "Buscar turno", exact: true })
+    .click();
+  await expect(page).toHaveURL(/directorio/);
+  await expect(
+    page.getByRole("heading", {
+      name: "Encontrá un turno con el prestador indicado.",
+    }),
+  ).toBeVisible();
   await page.screenshot({
-    path: "test-results/pricing-mobile.png",
+    path: "test-results/directory-mobile.png",
     fullPage: true,
   });
+});
+test("directory filters providers by public specialty and links to tenant page", async ({
+  page,
+}) => {
+  const state = await mockSupabase(page);
+  await page.goto("/directorio");
+  await page.getByPlaceholder("Buscar por nombre o especialidad").fill("demo");
+  await page.getByLabel("Especialidad").selectOption("Odontología General");
+  await expect(
+    page.getByRole("heading", { name: "Clínica Demo" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Ver página y turnos" }).click();
+  await expect(page).toHaveURL(/\/t\/clinica-demo/);
+  expect(state.calls.some((c) => c.name === "search_public_providers")).toBe(
+    true,
+  );
 });
 test("public availability preserves reservation through login and confirms via RPC", async ({
   page,
@@ -93,8 +117,9 @@ test("admin creates a clinic, completes onboarding steps and creates a professio
 }) => {
   const state = await mockSupabase(page, { role: "admin", signedIn: true });
   await page.goto("/signup");
-  await page.getByLabel("Nombre del consultorio").fill("Centro Nuevo");
-  await page.getByLabel("Dirección de tu consultorio").fill("centro-nuevo");
+  await page.getByRole("button", { name: "Clínica" }).click();
+  await page.getByLabel("Nombre de la clínica").fill("Centro Nuevo");
+  await page.getByLabel("Dirección pública").fill("centro-nuevo");
   await page.getByLabel("Nombre del responsable").fill("Responsable");
   await page.getByLabel("Teléfono").fill("555");
   await page.getByLabel("Email del consultorio").fill("clinic@example.test");
@@ -117,6 +142,12 @@ test("admin creates a clinic, completes onboarding steps and creates a professio
   expect(
     state.calls.some(
       (c) => c.name === "professionals" && c.body.first_name === "Martín",
+    ),
+  ).toBe(true);
+  expect(
+    state.calls.some(
+      (c) =>
+        c.name === "register_tenant" && c.body.p_provider_type === "CLINIC",
     ),
   ).toBe(true);
 });

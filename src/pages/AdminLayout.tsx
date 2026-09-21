@@ -61,11 +61,11 @@ export function AdminIndex() {
     return <Navigate to={`/admin/${q.data[0].tenants.slug}`} replace />;
   return (
     <>
-      <h1>Mis consultorios</h1>
+      <h1>Mis espacios</h1>
       {!q.data?.length ? (
         <Empty>
           No tenés una membresía administrativa.{" "}
-          <Link to="/signup">Crear consultorio</Link>
+          <Link to="/signup">Registrar prestador</Link>
         </Empty>
       ) : (
         <div className="professional-grid">
@@ -100,8 +100,8 @@ export function AdminLayout() {
   if (!member)
     return (
       <Empty>
-        No tenés acceso a este consultorio.{" "}
-        <Link to="/admin">Ver mis consultorios</Link>
+        No tenés acceso a este espacio.{" "}
+        <Link to="/admin">Ver mis espacios</Link>
       </Empty>
     );
   const subscription =
@@ -157,14 +157,14 @@ export function AdminLayout() {
               Ver página pública
               <ArrowUpRight size={16} />
             </Link>
-            <Link to="/admin">Cambiar consultorio</Link>
+            <Link to="/admin">Cambiar espacio</Link>
           </div>
         </aside>
         <section className="admin-content">
           {!live ? (
             <>
               <div className="notice error">
-                La suscripción del consultorio no está habilitada. Contactá a
+                La suscripción de este espacio no está habilitada. Contactá a
                 soporte para reactivarla.
               </div>
               <SubscriptionPage />

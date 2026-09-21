@@ -1,4 +1,6 @@
 export type Role = "TENANT_ADMIN" | "OPERATOR";
+export type ProviderType = "CLINIC" | "INDEPENDENT_PROFESSIONAL";
+export type PageTemplate = "CLASSIC" | "EDITORIAL" | "COMPACT";
 export type AppointmentStatus =
   "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 export interface Plan {
@@ -26,6 +28,10 @@ export interface Tenant {
   primary_color: string | null;
   secondary_color: string | null;
   welcome_text: string | null;
+  provider_type: ProviderType;
+  page_template: PageTemplate;
+  hero_image_path: string | null;
+  tagline: string | null;
   active?: boolean;
   responsible_name?: string;
 }
@@ -143,10 +149,28 @@ export type PublicProfessional = Pick<
   Professional,
   "id" | "first_name" | "last_name" | "specialty" | "description"
 >;
+export interface PublicProvider {
+  id: string;
+  name: string;
+  slug: string;
+  provider_type: ProviderType;
+  description: string | null;
+  tagline: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  logo_path: string | null;
+  hero_image_path: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  specialties: string[];
+}
 export interface RpcResults {
   get_public_tenant_by_slug: Tenant[];
   get_public_tenant_by_hostname: { slug: string }[];
   get_public_professionals: PublicProfessional[];
+  get_public_specialties: { specialty: string }[];
+  search_public_providers: PublicProvider[];
   get_available_slots: Slot[];
   get_available_days: { day: string }[];
   register_tenant: { tenant_id: string; tenant_slug: string }[];

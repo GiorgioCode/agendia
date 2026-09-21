@@ -284,6 +284,35 @@ test("public professional and tenant projections omit internal contact and accou
   ).rows[0];
   assert.equal(t.id, f.tA);
   assert.ok(!("responsible_name" in t));
+  assert.equal(t.provider_type, "CLINIC");
+  assert.equal(t.page_template, "CLASSIC");
+});
+test("public directory searches active providers by specialty without private data", async () => {
+  await db.client.query(
+    "update public.tenants set tagline='Agenda unica', provider_type='INDEPENDENT_PROFESSIONAL', page_template='EDITORIAL' where id=$1",
+    [f.tA],
+  );
+  await db.client.query(
+    "insert into public.professionals(tenant_id,first_name,last_name,specialty,active,email) values($1,'Inactive','Pro','Dermatología',false,'hidden@example.test')",
+    [f.tA],
+  );
+  const specialties = (
+    await actor(null, "select * from public.get_public_specialties()")
+  ).rows.map((r) => r.specialty);
+  assert.ok(specialties.includes("General"));
+  assert.ok(!specialties.includes("Dermatología"));
+  const providers = (
+    await actor(
+      null,
+      "select * from public.search_public_providers('unica','General')",
+    )
+  ).rows;
+  assert.equal(providers.length, 1);
+  assert.equal(providers[0].id, f.tA);
+  assert.equal(providers[0].provider_type, "INDEPENDENT_PROFESSIONAL");
+  assert.deepEqual(providers[0].specialties, ["General"]);
+  assert.ok(!("responsible_name" in providers[0]));
+  assert.ok(!("user_id" in providers[0]));
 });
 test("composite FK and immutable tenant prevent cross-tenant relationships", async () => {
   await assert.rejects(
@@ -657,9 +686,18 @@ test("storage write requires matching tenant admin; operator and other tenant de
 test("atomic registration creates tenant, admin and 14-day trial; duplicate slug does not leave partial data", async () => {
   const r = await actor(
     uid.patientA,
-    "select * from public.register_tenant('New clinic','new-clinic','Responsible','555','clinic@example.test')",
+    "select * from public.register_tenant('New clinic','new-clinic','Responsible','555','clinic@example.test','America/Argentina/Buenos_Aires','BASIC','INDEPENDENT_PROFESSIONAL')",
   );
   const id = r.rows[0].tenant_id;
+  assert.equal(
+    (
+      await db.client.query(
+        "select provider_type from public.tenants where id=$1",
+        [id],
+      )
+    ).rows[0].provider_type,
+    "INDEPENDENT_PROFESSIONAL",
+  );
   assert.equal(
     (
       await db.client.query(
@@ -679,7 +717,7 @@ test("atomic registration creates tenant, admin and 14-day trial; duplicate slug
   await assert.rejects(
     actor(
       uid.patientA,
-      "select * from public.register_tenant('New clinic','new-clinic','Responsible','555','clinic@example.test')",
+      "select * from public.register_tenant('New clinic','new-clinic','Responsible','555','clinic@example.test','America/Argentina/Buenos_Aires','BASIC','INDEPENDENT_PROFESSIONAL')",
     ),
     /SLUG_TAKEN/,
   );

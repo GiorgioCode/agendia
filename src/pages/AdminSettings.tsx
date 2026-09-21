@@ -15,6 +15,7 @@ import { assetUrl, rpc, rows, supabase } from "../lib/supabase";
 import type { Plan } from "../types/models";
 import { useAdmin } from "./AdminLayout";
 const settingsSchema = z.object({
+  provider_type: z.enum(["CLINIC", "INDEPENDENT_PROFESSIONAL"]),
   name: requiredText,
   responsible_name: requiredText,
   description: z.string().max(2000),
@@ -28,6 +29,8 @@ const settingsSchema = z.object({
   primary_color: z.string().regex(/^#[\da-fA-F]{6}$/),
   secondary_color: z.string().regex(/^#[\da-fA-F]{6}$/),
   welcome_text: z.string().max(500),
+  tagline: z.string().max(180),
+  page_template: z.enum(["CLASSIC", "EDITORIAL", "COMPACT"]),
 });
 export function Settings() {
   const { tenant } = useAdmin(),
@@ -36,8 +39,9 @@ export function Settings() {
     [error, setError] = useState<unknown>(null);
   return (
     <>
-      <Heading eyebrow="TU IDENTIDAD" title="Configuración del consultorio">
-        Personalizá el espacio que ven tus pacientes.
+      <Heading eyebrow="TU IDENTIDAD" title="Configuración del prestador">
+        Personalizá el espacio que ven tus pacientes en el directorio y en tu
+        página pública.
       </Heading>
       <section className="card form-card">
         <div className="logo-upload">
@@ -98,11 +102,70 @@ export function Settings() {
             <small className="muted">PNG, JPG o WebP. Máximo 2 MB.</small>
           </label>
         </div>
+        <div className="logo-upload">
+          {tenant.hero_image_path && (
+            <img
+              src={assetUrl(tenant.hero_image_path)}
+              alt={`Portada de ${tenant.name}`}
+            />
+          )}
+          <label>
+            Imagen de portada
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              disabled={uploading}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setError(null);
+                setUploading(true);
+                try {
+                  if (
+                    !["image/png", "image/jpeg", "image/webp"].includes(
+                      file.type,
+                    ) ||
+                    file.size > 2 * 1024 * 1024
+                  )
+                    throw new Error("LOGO_INVALID");
+                  const ext =
+                    file.type === "image/jpeg"
+                      ? "jpg"
+                      : file.type.split("/")[1];
+                  const path = `${tenant.id}/hero-${crypto.randomUUID()}.${ext}`;
+                  const { error: uploadError } = await supabase.storage
+                    .from("tenant-assets")
+                    .upload(path, file);
+                  if (uploadError) throw uploadError;
+                  const { error: saveError } = await supabase
+                    .from("tenants")
+                    .update({ hero_image_path: path })
+                    .eq("id", tenant.id);
+                  if (saveError) {
+                    await supabase.storage.from("tenant-assets").remove([path]);
+                    throw saveError;
+                  }
+                  if (tenant.hero_image_path)
+                    await supabase.storage
+                      .from("tenant-assets")
+                      .remove([tenant.hero_image_path]);
+                  await cache.invalidateQueries();
+                } catch (err) {
+                  setError(err);
+                } finally {
+                  setUploading(false);
+                }
+              }}
+            />
+            <small className="muted">PNG, JPG o WebP. Máximo 2 MB.</small>
+          </label>
+        </div>
         {error != null && <ErrorState error={error} />}
         <DataForm
           key={tenant.id}
           schema={settingsSchema}
           values={{
+            provider_type: tenant.provider_type || "CLINIC",
             name: tenant.name,
             responsible_name: tenant.responsible_name || "",
             description: tenant.description || "",
@@ -114,9 +177,22 @@ export function Settings() {
             primary_color: tenant.primary_color || "#176b5b",
             secondary_color: tenant.secondary_color || "#e4eee8",
             welcome_text: tenant.welcome_text || "",
+            tagline: tenant.tagline || "",
+            page_template: tenant.page_template || "CLASSIC",
           }}
           fields={[
-            { name: "name", label: "Nombre comercial", required: true },
+            {
+              name: "provider_type",
+              label: "Tipo de prestador",
+              options: [
+                { value: "CLINIC", label: "Clínica o centro" },
+                {
+                  value: "INDEPENDENT_PROFESSIONAL",
+                  label: "Profesional independiente",
+                },
+              ],
+            },
+            { name: "name", label: "Nombre público", required: true },
             { name: "responsible_name", label: "Responsable", required: true },
             { name: "phone", label: "Teléfono", type: "tel" },
             { name: "email", label: "Email", type: "email" },
@@ -133,6 +209,16 @@ export function Settings() {
               label: "Color secundario",
               type: "color",
             },
+            {
+              name: "page_template",
+              label: "Plantilla pública",
+              options: [
+                { value: "CLASSIC", label: "Clásica" },
+                { value: "EDITORIAL", label: "Editorial" },
+                { value: "COMPACT", label: "Compacta" },
+              ],
+            },
+            { name: "tagline", label: "Frase breve" },
             { name: "welcome_text", label: "Texto de bienvenida" },
             { name: "description", label: "Descripción", type: "textarea" },
           ]}
@@ -253,7 +339,10 @@ const signupSchema = z.object({
 export function Signup() {
   const [params] = useSearchParams(),
     navigate = useNavigate(),
-    cache = useQueryClient();
+    cache = useQueryClient(),
+    [providerType, setProviderType] = useState<
+      "CLINIC" | "INDEPENDENT_PROFESSIONAL"
+    >("CLINIC");
   const plans = useQuery({
     queryKey: ["plans"],
     queryFn: () => rows<Plan>("plans"),
@@ -262,9 +351,9 @@ export function Signup() {
     <div className="narrow">
       <Heading
         eyebrow="EMPEZÁ CON AGENDIA"
-        title="Un espacio para tu consultorio."
+        title="Un espacio para tu práctica."
       >
-        14 días para conocer una forma más simple de organizarte.
+        Registrá tu clínica o perfil profesional para recibir reservas online.
       </Heading>
       <section className="card">
         {plans.isLoading ? (
@@ -272,62 +361,95 @@ export function Signup() {
         ) : plans.error ? (
           <ErrorState error={plans.error} />
         ) : (
-          <DataForm
-            schema={signupSchema}
-            values={{
-              name: "",
-              slug: "",
-              responsible_name: "",
-              phone: "",
-              email: "",
-              timezone: "America/Argentina/Buenos_Aires",
-              plan_code: params.get("plan") || "BASIC",
-            }}
-            fields={[
-              { name: "name", label: "Nombre del consultorio", required: true },
-              {
-                name: "slug",
-                label: "Dirección de tu consultorio",
-                required: true,
-                hint: "Tu página: /t/nombre-del-consultorio",
-              },
-              {
-                name: "responsible_name",
-                label: "Nombre del responsable",
-                required: true,
-              },
-              { name: "phone", label: "Teléfono", type: "tel", required: true },
-              {
-                name: "email",
-                label: "Email del consultorio",
-                type: "email",
-                required: true,
-              },
-              { name: "timezone", label: "Zona horaria", required: true },
-              {
-                name: "plan_code",
-                label: "Plan",
-                options: plans.data?.map((p) => ({
-                  value: p.code,
-                  label: p.name,
-                })),
-              },
-            ]}
-            submitLabel="Crear consultorio"
-            onSubmit={async (v) => {
-              const result = await rpc("register_tenant", {
-                p_name: v.name,
-                p_slug: v.slug,
-                p_responsible_name: v.responsible_name,
-                p_phone: v.phone,
-                p_email: v.email,
-                p_timezone: v.timezone,
-                p_plan_code: v.plan_code,
-              });
-              await cache.invalidateQueries();
-              navigate(`/admin/${result[0].tenant_slug}/onboarding`);
-            }}
-          />
+          <>
+            <div className="segmented-control" aria-label="Tipo de prestador">
+              <button
+                className={providerType === "CLINIC" ? "selected" : ""}
+                type="button"
+                onClick={() => setProviderType("CLINIC")}
+              >
+                Clínica
+              </button>
+              <button
+                className={
+                  providerType === "INDEPENDENT_PROFESSIONAL" ? "selected" : ""
+                }
+                type="button"
+                onClick={() => setProviderType("INDEPENDENT_PROFESSIONAL")}
+              >
+                Profesional independiente
+              </button>
+            </div>
+            <DataForm
+              schema={signupSchema}
+              values={{
+                name: "",
+                slug: "",
+                responsible_name: "",
+                phone: "",
+                email: "",
+                timezone: "America/Argentina/Buenos_Aires",
+                plan_code: params.get("plan") || "BASIC",
+              }}
+              fields={[
+                {
+                  name: "name",
+                  label:
+                    providerType === "CLINIC"
+                      ? "Nombre de la clínica"
+                      : "Nombre profesional o comercial",
+                  required: true,
+                },
+                {
+                  name: "slug",
+                  label: "Dirección pública",
+                  required: true,
+                  hint: "Tu página: /t/nombre-publico",
+                },
+                {
+                  name: "responsible_name",
+                  label: "Nombre del responsable",
+                  required: true,
+                },
+                {
+                  name: "phone",
+                  label: "Teléfono",
+                  type: "tel",
+                  required: true,
+                },
+                {
+                  name: "email",
+                  label: "Email del consultorio",
+                  type: "email",
+                  required: true,
+                },
+                { name: "timezone", label: "Zona horaria", required: true },
+                {
+                  name: "plan_code",
+                  label: "Plan",
+                  options: plans.data?.map((p) => ({
+                    value: p.code,
+                    label: p.name,
+                  })),
+                },
+              ]}
+              submitLabel="Crear consultorio"
+              onSubmit={async (v) => {
+                const result = await rpc("register_tenant", {
+                  p_name: v.name,
+                  p_slug: v.slug,
+                  p_responsible_name: v.responsible_name,
+                  p_phone: v.phone,
+                  p_email: v.email,
+                  p_timezone: v.timezone,
+                  p_plan_code: v.plan_code,
+                  p_provider_type: providerType,
+                });
+                await cache.invalidateQueries();
+                navigate(`/admin/${result[0].tenant_slug}/onboarding`);
+              }}
+            />
+          </>
         )}
       </section>
     </div>

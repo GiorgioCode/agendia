@@ -42,6 +42,14 @@ export function errorMessage(error: unknown): string {
     typeof error === "object" && error && "message" in error
       ? String(error.message)
       : String(error);
+  const status =
+    typeof error === "object" && error && "status" in error
+      ? Number(error.status)
+      : undefined;
+  const code =
+    typeof error === "object" && error && "code" in error
+      ? String(error.code)
+      : undefined;
   for (const [code, message] of Object.entries(messages))
     if (text.includes(code)) return message;
   if (text.includes("Invalid login credentials"))
@@ -50,7 +58,15 @@ export function errorMessage(error: unknown): string {
     return "Confirmá tu email para iniciar sesión.";
   if (text.includes("already registered"))
     return "Este email ya está registrado.";
-  if (text.includes("rate limit"))
+  if (text.includes("Invalid API key") || text.includes("401"))
+    return "La clave pública de Supabase no es válida. Revisá VITE_SUPABASE_PUBLISHABLE_KEY.";
+  if (
+    status === 429 ||
+    code === "over_email_send_rate_limit" ||
+    code === "over_request_rate_limit" ||
+    text.includes("rate limit") ||
+    text.includes("Too Many Requests")
+  )
     return "Esperá un momento antes de volver a intentarlo.";
   if (text.includes("Failed to fetch"))
     return "No pudimos conectar. Revisá tu conexión e intentá nuevamente.";

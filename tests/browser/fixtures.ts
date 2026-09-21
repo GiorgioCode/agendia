@@ -65,6 +65,10 @@ export async function mockSupabase(
     email: "clinic@example.test",
     address: "Av. Demo 123",
     welcome_text: "Tu sonrisa, en buenas manos.",
+    provider_type: "CLINIC",
+    page_template: "CLASSIC",
+    hero_image_path: null,
+    tagline: "Odontología cercana",
     logo_path: null,
     website: null,
   };
@@ -132,6 +136,27 @@ export async function mockSupabase(
             last_name: professional.last_name,
             specialty: professional.specialty,
             description: professional.description,
+          },
+        ]);
+      if (name === "get_public_specialties")
+        return reply([{ specialty: professional.specialty }]);
+      if (name === "search_public_providers")
+        return reply([
+          {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+            provider_type: tenant.provider_type,
+            description: tenant.description,
+            tagline: tenant.tagline,
+            address: tenant.address,
+            phone: tenant.phone,
+            email: tenant.email,
+            logo_path: tenant.logo_path,
+            hero_image_path: tenant.hero_image_path,
+            primary_color: tenant.primary_color,
+            secondary_color: tenant.secondary_color,
+            specialties: [professional.specialty],
           },
         ]);
       if (name === "get_available_days") return reply([]);

@@ -1,9 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import type { RpcResults } from "../types/models";
-const url = import.meta.env.VITE_SUPABASE_URL;
+const url = import.meta.env.VITE_SUPABASE_URL?.trim();
 const key =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  import.meta.env.VITE_SUPABASE_ANON_KEY;
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 export const configured = Boolean(url && key);
 export const supabase = createClient(
   url || "http://127.0.0.1:54321",

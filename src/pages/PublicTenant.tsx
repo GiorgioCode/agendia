@@ -68,7 +68,7 @@ export function TenantLayout() {
   return (
     <TenantContext.Provider value={t}>
       <div
-        className="tenant-shell"
+        className={`tenant-shell template-${(t.page_template || "CLASSIC").toLowerCase()}`}
         style={
           {
             "--tenant-primary": t.primary_color || "#176b5b",
@@ -105,44 +105,69 @@ export function TenantHome() {
   return (
     <>
       <section className="tenant-intro">
-        <p className="eyebrow">BIENVENIDO A {t.name.toUpperCase()}</p>
-        <h1>{t.welcome_text || "Un espacio para cuidar de vos."}</h1>
-        <p className="muted">
-          {t.description ||
-            "Encontrá a tu profesional y reservá tu próximo turno."}
-        </p>
-        <div className="contact-row">
-          {t.address && (
-            <span>
-              <MapPin size={17} />
-              {t.address}
-            </span>
-          )}
-          {t.phone && (
-            <span>
-              <Phone size={17} />
-              {t.phone}
-            </span>
-          )}
-          {t.email && (
-            <span>
-              <Mail size={17} />
-              {t.email}
-            </span>
+        {t.hero_image_path && (
+          <img
+            className="tenant-hero-image"
+            src={assetUrl(t.hero_image_path)}
+            alt=""
+          />
+        )}
+        <div className="tenant-intro-copy">
+          <p className="eyebrow">
+            {t.provider_type === "INDEPENDENT_PROFESSIONAL"
+              ? "PROFESIONAL INDEPENDIENTE"
+              : "CLÍNICA"}
+          </p>
+          <h1>{t.welcome_text || "Un espacio para cuidar de vos."}</h1>
+          {t.tagline && <p className="tenant-tagline">{t.tagline}</p>}
+          <p className="muted">
+            {t.description ||
+              "Encontrá a tu profesional y reservá tu próximo turno."}
+          </p>
+          <div className="contact-row">
+            {t.address && (
+              <span>
+                <MapPin size={17} />
+                {t.address}
+              </span>
+            )}
+            {t.phone && (
+              <span>
+                <Phone size={17} />
+                {t.phone}
+              </span>
+            )}
+            {t.email && (
+              <span>
+                <Mail size={17} />
+                {t.email}
+              </span>
+            )}
+          </div>
+          {t.website && /^https?:\/\//.test(t.website) && (
+            <a
+              className="text-link"
+              href={t.website}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Visitar sitio web <ArrowRight size={14} />
+            </a>
           )}
         </div>
-        {t.website && /^https?:\/\//.test(t.website) && (
-          <a
-            className="text-link"
-            href={t.website}
-            rel="noreferrer"
-            target="_blank"
-          >
-            Visitar sitio web <ArrowRight size={14} />
-          </a>
-        )}
       </section>
-      <Heading eyebrow="NUESTRO EQUIPO" title="Elegí tu profesional">
+      <Heading
+        eyebrow={
+          t.provider_type === "INDEPENDENT_PROFESSIONAL"
+            ? "DISPONIBILIDAD"
+            : "NUESTRO EQUIPO"
+        }
+        title={
+          t.provider_type === "INDEPENDENT_PROFESSIONAL"
+            ? "Elegí un horario"
+            : "Elegí tu profesional"
+        }
+      >
         Consultá los horarios disponibles y reservá online.
       </Heading>
       {q.isLoading ? (
