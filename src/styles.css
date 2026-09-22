@@ -1505,6 +1505,43 @@ td small {
   text-align: right;
   margin: 0;
 }
+.payment-plans-section {
+  margin-top: 34px;
+}
+.subscription-plans {
+  max-width: none;
+  margin: 0;
+}
+.payment-plan {
+  display: flex;
+  flex-direction: column;
+  min-height: 390px;
+  border-color: #dce6dc;
+}
+.payment-plan.current {
+  border-color: var(--tenant-primary);
+  background: linear-gradient(180deg, #f7fbf5 0%, #fff 72%);
+}
+.payment-plan-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.payment-plan .check-list {
+  flex: 1;
+}
+.payment-plan .notice {
+  margin-top: auto;
+  font-size: 0.75rem;
+}
+.payment-plan .action {
+  display: block;
+  margin-top: auto;
+}
+.payment-plan .action .btn {
+  width: 100%;
+}
 .onboarding-list {
   display: grid;
   gap: 15px;

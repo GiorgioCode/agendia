@@ -53,6 +53,15 @@ export async function mockSupabase(
     max_admins: 2,
     description: "Para tu consultorio.",
   };
+  const proPlan = {
+    ...plan,
+    id: "a0000000-0000-4000-8000-000000000099",
+    name: "Pro",
+    code: "PRO",
+    price: paidPlan ? 25000 : null,
+    max_professionals: 12,
+    description: "Para equipos en crecimiento.",
+  };
   const tenant = {
     id: tenantId,
     name: "Clínica Demo",
@@ -254,7 +263,7 @@ export async function mockSupabase(
       return reply({ id: proId });
     }
     if (method === "DELETE") return route.fulfill({ status: 204 });
-    if (table === "plans") return reply([plan]);
+    if (table === "plans") return reply(paidPlan ? [plan, proPlan] : [plan]);
     if (table === "tenants") return reply([tenant]);
     if (table === "tenant_members")
       return reply(

@@ -187,6 +187,11 @@ test("admin can force Mercado Pago checkout for a selected plan", async ({
     signedIn: true,
     paidPlan: true,
   });
+  await page.goto("/admin/clinica-demo/subscription");
+  await expect(page.getByRole("heading", { name: "Pro" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Cambiar y pagar" }),
+  ).toBeVisible();
   await page.goto("/admin/clinica-demo/subscription?plan=BASIC&checkout=1");
   await expect(
     page.getByText("Preparando el pago del plan BASIC"),

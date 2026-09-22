@@ -18,6 +18,7 @@ import {
   CreditCard,
   ArrowUpRight,
   Compass,
+  Check,
 } from "lucide-react";
 import { rows, supabase } from "../lib/supabase";
 import { useAuth } from "../app/providers";
@@ -233,6 +234,13 @@ export function SubscriptionPage() {
     void pay(plan);
   }, [plans.data, plans.error, plans.isLoading, params]);
   const forcedPlan = params.get("checkout") === "1" ? params.get("plan") : "";
+  const money = (plan: Plan) =>
+    plan.price == null
+      ? "Consultar"
+      : new Intl.NumberFormat("es-AR", {
+          style: "currency",
+          currency: plan.currency,
+        }).format(plan.price);
   return (
     <>
       <h1>Tu suscripción</h1>
@@ -269,8 +277,14 @@ export function SubscriptionPage() {
       ) : (
         <Empty>No hay una suscripción registrada.</Empty>
       )}
-      <section className="section-block">
-        <h2>Planes disponibles</h2>
+      <section className="section-block payment-plans-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">PAGO ONLINE</p>
+            <h2>Elegí y pagá tu plan</h2>
+          </div>
+          <span className="badge active">Mercado Pago</span>
+        </div>
         {forcedPlan && (
           <p className="notice" role="status">
             Preparando el pago del plan {forcedPlan}. Si no se abre Mercado
@@ -284,24 +298,50 @@ export function SubscriptionPage() {
         ) : (
           <div className="plan-grid subscription-plans">
             {plans.data
-              ?.filter((p) => p.active && p.price != null)
+              ?.filter((p) => p.active)
               .map((p) => (
-                <article className="card plan" key={p.id}>
-                  <p className="eyebrow">{p.code}</p>
-                  <h3>{p.name}</h3>
+                <article
+                  className={`card plan payment-plan ${s?.plan_id === p.id ? "current" : ""}`}
+                  key={p.id}
+                >
+                  {s?.plan_id === p.id && (
+                    <span className="plan-ribbon">PLAN ACTUAL</span>
+                  )}
+                  <div className="payment-plan-head">
+                    <div>
+                      <p className="eyebrow">{p.code}</p>
+                      <h3>{p.name}</h3>
+                    </div>
+                    {s?.plan_id === p.id && <StatusBadge status={s.status} />}
+                  </div>
                   <p className="muted">{p.description}</p>
                   <p className="price">
-                    {new Intl.NumberFormat("es-AR", {
-                      style: "currency",
-                      currency: p.currency,
-                    }).format(p.price!)}
-                    <small>/mes</small>
+                    {money(p)}
+                    {p.price != null && <small>/mes</small>}
                   </p>
-                  <ActionButton action={() => pay(p)}>
-                    {s?.plan_id === p.id
-                      ? "Pagar este plan ahora"
-                      : "Cambiar y pagar"}
-                  </ActionButton>
+                  <ul className="check-list">
+                    <li>
+                      <Check size={17} />
+                      {p.max_professionals ?? "Sin límite de"} profesionales
+                    </li>
+                    <li>
+                      <Check size={17} />
+                      {p.max_admins ?? "Sin límite de"} administradores
+                    </li>
+                    <li>
+                      <Check size={17} />
+                      Checkout Pro de Mercado Pago
+                    </li>
+                  </ul>
+                  {p.price == null ? (
+                    <p className="notice">Contactá soporte para contratar.</p>
+                  ) : (
+                    <ActionButton action={() => pay(p)}>
+                      {s?.plan_id === p.id
+                        ? "Pagar este plan ahora"
+                        : "Cambiar y pagar"}
+                    </ActionButton>
+                  )}
                 </article>
               ))}
           </div>
