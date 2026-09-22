@@ -7,7 +7,7 @@ test("landing, prices, and mobile navigation", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Tu tiempo, bien cuidado." }),
   ).toBeVisible();
-  await expect(page.getByText("Consultar", { exact: true })).toBeVisible();
+  await expect(page.getByText("$ 5.000,00")).toBeVisible();
   await mkdir("test-results", { recursive: true });
   await page.screenshot({
     path: "test-results/home-desktop.png",
@@ -185,7 +185,6 @@ test("admin can force Mercado Pago checkout for a selected plan", async ({
   const state = await mockSupabase(page, {
     role: "admin",
     signedIn: true,
-    paidPlan: true,
   });
   await page.goto("/admin/clinica-demo/subscription");
   await expect(page.getByRole("heading", { name: "Pro" })).toBeVisible();

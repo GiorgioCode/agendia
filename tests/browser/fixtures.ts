@@ -9,12 +9,10 @@ export async function mockSupabase(
     role = "patient",
     signedIn = false,
     conflict = false,
-    paidPlan = false,
   }: {
     role?: "patient" | "admin" | "operator";
     signedIn?: boolean;
     conflict?: boolean;
-    paidPlan?: boolean;
   } = {},
 ) {
   const user = {
@@ -47,7 +45,7 @@ export async function mockSupabase(
     name: "Basic",
     code: "BASIC",
     active: true,
-    price: paidPlan ? 15000 : null,
+    price: 5000,
     currency: "ARS",
     max_professionals: 5,
     max_admins: 2,
@@ -58,7 +56,7 @@ export async function mockSupabase(
     id: "a0000000-0000-4000-8000-000000000099",
     name: "Pro",
     code: "PRO",
-    price: paidPlan ? 25000 : null,
+    price: 20000,
     max_professionals: 12,
     description: "Para equipos en crecimiento.",
   };
@@ -263,7 +261,7 @@ export async function mockSupabase(
       return reply({ id: proId });
     }
     if (method === "DELETE") return route.fulfill({ status: 204 });
-    if (table === "plans") return reply(paidPlan ? [plan, proPlan] : [plan]);
+    if (table === "plans") return reply([plan, proPlan]);
     if (table === "tenants") return reply([tenant]);
     if (table === "tenant_members")
       return reply(
