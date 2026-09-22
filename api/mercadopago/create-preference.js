@@ -49,8 +49,10 @@ export default async function handler(req, res) {
       join public.plans p
         on p.active = true
        and (
-         ($2::uuid is not null and p.id = $2::uuid)
-         or ($3::text <> '' and p.code = $3::text)
+         p.id = coalesce(
+           nullif($2::text, '')::uuid,
+           (select id from public.plans where code = $3::text and active limit 1)
+         )
        )
       where t.id = $1
         and tm.user_id = $4

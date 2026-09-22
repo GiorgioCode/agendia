@@ -221,7 +221,12 @@ export function SubscriptionPage() {
       }),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "CHECKOUT_ERROR");
+    if (!response.ok)
+      throw new Error(
+        [data.message || "CHECKOUT_ERROR", data.detail?.message]
+          .filter(Boolean)
+          .join(": "),
+      );
     window.location.href = data.init_point || data.sandbox_init_point;
   }
   useEffect(() => {

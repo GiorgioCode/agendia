@@ -20,6 +20,14 @@ const messages: Record<string, string> = {
   PLAN_LIMIT_REACHED: "Se alcanzó el límite del plan.",
   PLAN_NOT_PAYABLE: "Este plan no tiene un precio disponible para pagar online.",
   TENANT_AND_PLAN_REQUIRED: "Elegí un plan para continuar.",
+  DATABASE_URL_REQUIRED:
+    "Falta configurar DATABASE_URL o URL_DATABASE en el servidor.",
+  SUPABASE_AUTH_CONFIG_REQUIRED:
+    "Falta configurar Supabase Auth en el servidor.",
+  MP_ACCESS_TOKEN_REQUIRED:
+    "Falta configurar MP_ACCESS_TOKEN en el servidor.",
+  MERCADOPAGO_ERROR:
+    "Mercado Pago rechazó la creación del checkout. Revisá las credenciales y el plan.",
   CHECKOUT_ERROR:
     "No pudimos iniciar el pago. Intentá nuevamente en unos minutos.",
   SLUG_TAKEN: "Esta dirección ya está en uso. Elegí otra.",

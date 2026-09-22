@@ -93,4 +93,8 @@ describe("Domain errors", () => {
         message: "permission denied for table private.patient_notes",
       }),
     ).not.toContain("private.patient_notes"));
+  it("explains Mercado Pago checkout configuration errors", () =>
+    expect(errorMessage({ message: "MP_ACCESS_TOKEN_REQUIRED" })).toContain(
+      "MP_ACCESS_TOKEN",
+    ));
 });
