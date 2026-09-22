@@ -18,6 +18,10 @@ const messages: Record<string, string> = {
   DATE_BLOCKED: "El día está bloqueado.",
   OUTSIDE_WORKING_HOURS: "El horario está fuera de la agenda.",
   PLAN_LIMIT_REACHED: "Se alcanzó el límite del plan.",
+  PLAN_NOT_PAYABLE: "Este plan no tiene un precio disponible para pagar online.",
+  TENANT_AND_PLAN_REQUIRED: "Elegí un plan para continuar.",
+  CHECKOUT_ERROR:
+    "No pudimos iniciar el pago. Intentá nuevamente en unos minutos.",
   SLUG_TAKEN: "Esta dirección ya está en uso. Elegí otra.",
   INVALID_TENANT_NAME: "Revisá el nombre y la dirección del consultorio.",
   INVALID_TENANT_DATA: "Completá los datos del consultorio.",

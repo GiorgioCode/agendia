@@ -14,8 +14,20 @@ import {
 } from "lucide-react";
 import { rows, supabase } from "../lib/supabase";
 import { useAuth } from "../app/providers";
-import type { Membership, Subscription, Tenant, Role } from "../types/models";
-import { Empty, ErrorState, Loading, StatusBadge } from "../components/ui";
+import type {
+  Membership,
+  Plan,
+  Subscription,
+  Tenant,
+  Role,
+} from "../types/models";
+import {
+  ActionButton,
+  Empty,
+  ErrorState,
+  Loading,
+  StatusBadge,
+} from "../components/ui";
 type AdminContextType = {
   tenant: Tenant;
   role: Role;
@@ -178,7 +190,29 @@ export function AdminLayout() {
   );
 }
 export function SubscriptionPage() {
-  const { subscription: s } = useAdmin();
+  const { subscription: s, tenant } = useAdmin();
+  const { session } = useAuth();
+  const plans = useQuery({
+    queryKey: ["plans"],
+    queryFn: () => rows<Plan>("plans"),
+  });
+  async function pay(planId: string) {
+    const response = await fetch("/api/mercadopago/create-preference", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({
+        tenant_id: tenant.id,
+        tenant_slug: tenant.slug,
+        plan_id: planId,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "CHECKOUT_ERROR");
+    window.location.href = data.init_point || data.sandbox_init_point;
+  }
   return (
     <>
       <h1>Tu suscripción</h1>
@@ -208,13 +242,43 @@ export function SubscriptionPage() {
             </dd>
           </dl>
           <p className="muted">
-            Para modificar el plan, contactá al responsable de la plataforma
-            mediante el canal de soporte acordado al contratar.
+            Podés pagar online con Mercado Pago. La activación se confirma
+            automáticamente cuando el pago queda aprobado.
           </p>
         </div>
       ) : (
         <Empty>No hay una suscripción registrada.</Empty>
       )}
+      <section className="section-block">
+        <h2>Planes disponibles</h2>
+        {plans.isLoading ? (
+          <Loading />
+        ) : plans.error ? (
+          <ErrorState error={plans.error} />
+        ) : (
+          <div className="plan-grid subscription-plans">
+            {plans.data
+              ?.filter((p) => p.active && p.price != null)
+              .map((p) => (
+                <article className="card plan" key={p.id}>
+                  <p className="eyebrow">{p.code}</p>
+                  <h3>{p.name}</h3>
+                  <p className="muted">{p.description}</p>
+                  <p className="price">
+                    {new Intl.NumberFormat("es-AR", {
+                      style: "currency",
+                      currency: p.currency,
+                    }).format(p.price!)}
+                    <small>/mes</small>
+                  </p>
+                  <ActionButton action={() => pay(p.id)}>
+                    Pagar con Mercado Pago
+                  </ActionButton>
+                </article>
+              ))}
+          </div>
+        )}
+      </section>
     </>
   );
 }
