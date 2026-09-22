@@ -9,10 +9,12 @@ export async function mockSupabase(
     role = "patient",
     signedIn = false,
     conflict = false,
+    paidPlan = false,
   }: {
     role?: "patient" | "admin" | "operator";
     signedIn?: boolean;
     conflict?: boolean;
+    paidPlan?: boolean;
   } = {},
 ) {
   const user = {
@@ -45,7 +47,7 @@ export async function mockSupabase(
     name: "Basic",
     code: "BASIC",
     active: true,
-    price: null,
+    price: paidPlan ? 15000 : null,
     currency: "ARS",
     max_professionals: 5,
     max_admins: 2,
@@ -103,6 +105,28 @@ export async function mockSupabase(
   ];
   const appointments: Record<string, unknown>[] = [];
   const calls: { name: string; body: Record<string, unknown> }[] = [];
+  await page.route("**/api/mercadopago/create-preference", async (route) => {
+    calls.push({
+      name: "create-preference",
+      body: route.request().postDataJSON() || {},
+    });
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        preference_id: "pref-test",
+        init_point:
+          "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=pref-test",
+      }),
+    });
+  });
+  await page.route("https://www.mercadopago.com.ar/**", async (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: "<main>Checkout Pro</main>",
+    }),
+  );
   await page.route("http://127.0.0.1:54321/**", async (route) => {
     const request = route.request(),
       url = new URL(request.url()),

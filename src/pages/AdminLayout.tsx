@@ -1,5 +1,12 @@
-import { createContext, useContext, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 import { Link, NavLink, Navigate, Outlet, useParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -192,11 +199,13 @@ export function AdminLayout() {
 export function SubscriptionPage() {
   const { subscription: s, tenant } = useAdmin();
   const { session } = useAuth();
+  const [params] = useSearchParams();
+  const autoCheckoutStarted = useRef(false);
   const plans = useQuery({
     queryKey: ["plans"],
     queryFn: () => rows<Plan>("plans"),
   });
-  async function pay(planId: string) {
+  async function pay(plan: Pick<Plan, "id" | "code">) {
     const response = await fetch("/api/mercadopago/create-preference", {
       method: "POST",
       headers: {
@@ -206,13 +215,24 @@ export function SubscriptionPage() {
       body: JSON.stringify({
         tenant_id: tenant.id,
         tenant_slug: tenant.slug,
-        plan_id: planId,
+        plan_id: plan.id,
+        plan_code: plan.code,
       }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "CHECKOUT_ERROR");
     window.location.href = data.init_point || data.sandbox_init_point;
   }
+  useEffect(() => {
+    if (autoCheckoutStarted.current || plans.isLoading || plans.error) return;
+    if (params.get("checkout") !== "1") return;
+    const code = params.get("plan");
+    const plan = plans.data?.find((p) => p.code === code);
+    if (!plan) return;
+    autoCheckoutStarted.current = true;
+    void pay(plan);
+  }, [plans.data, plans.error, plans.isLoading, params]);
+  const forcedPlan = params.get("checkout") === "1" ? params.get("plan") : "";
   return (
     <>
       <h1>Tu suscripción</h1>
@@ -251,6 +271,12 @@ export function SubscriptionPage() {
       )}
       <section className="section-block">
         <h2>Planes disponibles</h2>
+        {forcedPlan && (
+          <p className="notice" role="status">
+            Preparando el pago del plan {forcedPlan}. Si no se abre Mercado
+            Pago, usá el botón del plan.
+          </p>
+        )}
         {plans.isLoading ? (
           <Loading />
         ) : plans.error ? (
@@ -271,8 +297,10 @@ export function SubscriptionPage() {
                     }).format(p.price!)}
                     <small>/mes</small>
                   </p>
-                  <ActionButton action={() => pay(p.id)}>
-                    Pagar con Mercado Pago
+                  <ActionButton action={() => pay(p)}>
+                    {s?.plan_id === p.id
+                      ? "Pagar este plan ahora"
+                      : "Cambiar y pagar"}
                   </ActionButton>
                 </article>
               ))}

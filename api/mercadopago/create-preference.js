@@ -15,7 +15,8 @@ export default async function handler(req, res) {
     const body = await readJson(req);
     const tenantId = String(body.tenant_id || "");
     const planId = String(body.plan_id || "");
-    if (!tenantId || !planId)
+    const planCode = String(body.plan_code || "");
+    if (!tenantId || (!planId && !planCode))
       return json(res, 400, { message: "TENANT_AND_PLAN_REQUIRED" });
 
     await client.query("begin");
@@ -45,14 +46,19 @@ export default async function handler(req, res) {
         order by created_at desc
         limit 1
       ) s on true
-      join public.plans p on p.id = $2 and p.active = true
+      join public.plans p
+        on p.active = true
+       and (
+         ($2::uuid is not null and p.id = $2::uuid)
+         or ($3::text <> '' and p.code = $3::text)
+       )
       where t.id = $1
-        and tm.user_id = $3
+        and tm.user_id = $4
         and tm.active = true
         and tm.role = 'TENANT_ADMIN'
       limit 1
       `,
-      [tenantId, planId, userId],
+      [tenantId, planId || null, planCode, userId],
     );
     const checkout = rows[0];
     if (!checkout) {

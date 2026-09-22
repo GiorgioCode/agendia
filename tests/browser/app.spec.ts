@@ -179,6 +179,30 @@ test("operator can create and reschedule appointments but cannot open settings",
     page.getByText("No tenés permiso para acceder a esta sección."),
   ).toBeVisible();
 });
+test("admin can force Mercado Pago checkout for a selected plan", async ({
+  page,
+}) => {
+  const state = await mockSupabase(page, {
+    role: "admin",
+    signedIn: true,
+    paidPlan: true,
+  });
+  await page.goto("/admin/clinica-demo/subscription?plan=BASIC&checkout=1");
+  await expect(
+    page.getByText("Preparando el pago del plan BASIC"),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      state.calls.some(
+        (c) =>
+          c.name === "create-preference" &&
+          c.body.plan_code === "BASIC" &&
+          c.body.tenant_id === "a0000000-0000-4000-8000-000000000001",
+      ),
+    )
+    .toBe(true);
+  await expect(page).toHaveURL(/mercadopago\.com\.ar/);
+});
 test("protected routes require login and unknown tenant stays private", async ({
   page,
 }) => {
